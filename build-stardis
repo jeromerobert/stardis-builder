@@ -1,0 +1,61 @@
+#! /bin/sh
+
+# sudo apt-get install libembree-dev cmake ninja make git g++ patchelf
+export CMAKE_INSTALL_PREFIX=$PWD/install
+
+download_git_repos () {
+  git clone https://gitlab.com/meso-star/stardis.git
+  git clone https://gitlab.com/meso-star/stardis-solver.git
+  git clone https://gitlab.com/vaplv/rcmake.git
+  git clone https://gitlab.com/vaplv/rsys.git
+  git clone https://gitlab.com/meso-star/star-2d.git
+  git clone https://gitlab.com/meso-star/star-3d.git
+  # Use develop branch because master is buggy
+  git clone -b develop https://gitlab.com/meso-star/star-enclosures-3d.git
+  git clone https://gitlab.com/meso-star/star-enclosures-2d.git
+  git clone https://gitlab.com/meso-star/star-geometry-3d.git
+  git clone https://gitlab.com/meso-star/star-stl.git
+  git clone https://gitlab.com/meso-star/star-sp.git
+  git clone https://gitlab.com/meso-star/star-3dut.git
+  git clone https://github.com/DEShawResearch/random123.git
+}
+
+build() {
+  echo Building $1 with ninja
+  cd $1
+  cmake -G Ninja -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX cmake/CMakeLists.txt
+  ninja install
+  cd ..
+}
+
+# Same as build but with GNU make instead of ninja
+build_make() {
+  echo Building $1 with make
+  cd $1
+  cmake -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX cmake/CMakeLists.txt
+  make -j$(nproc)
+  cd ..
+}
+
+build_random123() {
+  cd random123
+  prefix=$CMAKE_INSTALL_PREFIX make install-include
+}
+
+download_git_repos
+build_random123
+build rcmake
+build rsys
+build star-3d
+build star-3dut
+build star-geometry-3d
+build star-sp
+build star-enclosures-3d
+build star-2d
+build star-enclosures-2d
+build stardis-solver
+build star-stl
+# That one is buggy with ninja
+build_make stardis
+patchelf --set-rpath '$ORIGIN/../lib' $CMAKE_INSTALL_PREFIX/bin/*
+patchelf --set-rpath '$ORIGIN' $CMAKE_INSTALL_PREFIX/lib/lib*.so
