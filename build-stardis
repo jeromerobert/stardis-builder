@@ -1,6 +1,9 @@
 #! /bin/sh
 
-# sudo apt-get install libembree-dev cmake ninja make git g++ patchelf
+# sudo apt-get install libembree-dev cmake ninja-build make git g++ patchelf libtbb-dev libopenmpi-dev libxml2-utils docbook-xml
+# sudo apt-get install --no-install-recommends asciidoc
+# At the end: export MANPATH=$MANPATH:/path/to/install/share/man
+
 export CMAKE_INSTALL_PREFIX=$PWD/install
 
 download_git_repos () {
@@ -34,12 +37,14 @@ build_make() {
   cd $1
   cmake -DCMAKE_INSTALL_PREFIX=$CMAKE_INSTALL_PREFIX cmake/CMakeLists.txt
   make -j$(nproc)
+  make install
   cd ..
 }
 
 build_random123() {
   cd random123
   prefix=$CMAKE_INSTALL_PREFIX make install-include
+  cd ..
 }
 
 download_git_repos
